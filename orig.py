@@ -1,4 +1,5 @@
 import os, cv2, random
+os.environ["THEANO_FLAGS"] = "mode=FAST_RUN,device=gpu,floatX=float32"
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -69,42 +70,42 @@ model = Sequential()
 
 model.add(Activation(activation=center_normalize, input_shape=(ROWS, COLS, CHANNELS)))
 
+
 model.add(Convolution2D(32, 5, 5, border_mode='same', activation='relu', dim_ordering='tf'))
 model.add(Convolution2D(32, 5, 5, border_mode='same', activation='relu', dim_ordering='tf'))
-model.add(MaxPooling2D(pool_size=(2, 2), dim_ordering='tf'))
-print("check1")
-model.add(Convolution2D(64, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
-model.add(Convolution2D(64, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
-model.add(MaxPooling2D(pool_size=(2, 2), dim_ordering='tf'))
-print("check2")
-model.add(Convolution2D(128, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
-model.add(Convolution2D(128, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
-model.add(MaxPooling2D(pool_size=(2, 2), dim_ordering='tf'))
-print("check3")
-model.add(Convolution2D(256, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
-model.add(Convolution2D(256, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
-model.add(MaxPooling2D(pool_size=(2, 2), dim_ordering='tf'))
-print("check4")
+model.add(MaxPooling2D(pool_size=(4, 4), dim_ordering='tf'))
+
+model.add(Convolution2D(32, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
+model.add(Convolution2D(32, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
+model.add(MaxPooling2D(pool_size=(4, 4), dim_ordering='tf'))
+
+model.add(Convolution2D(32, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
+model.add(Convolution2D(32, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
+model.add(MaxPooling2D(pool_size=(4, 4), dim_ordering='tf'))
+
+model.add(Convolution2D(32, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
+model.add(Convolution2D(32, 3, 3, border_mode='same', activation='relu', dim_ordering='tf'))
+model.add(MaxPooling2D(pool_size=(4, 4), dim_ordering='tf'))
+
 model.add(Flatten())
-model.add(Dense(256, activation='relu'))
+model.add(Dense(32, activation='relu'))
 model.add(Dropout(0.5))
-print("check5")
-model.add(Dense(64, activation='relu'))
+
+model.add(Dense(32, activation='relu'))
 model.add(Dropout(0.5))
-print("check6")
+
 model.add(Dense(len(FISH_CLASSES)))
 model.add(Activation('sigmoid'))
-print("check7")
+
 model.compile(loss=objective, optimizer=optimizer)
-print("check8")
+
+
 early_stopping = EarlyStopping(monitor='val_loss', patience=4, verbose=1, mode='auto')        
-print("check9")
-model.fit(X_train, y_train, batch_size=8, nb_epoch=1,
+        
+model.fit(X_train, y_train, batch_size=4, nb_epoch=1,
               validation_split=0.2, verbose=1, shuffle=True, callbacks=[early_stopping])
-print("check10")
 
 preds = model.predict(X_valid, verbose=1)
-
 print("Validation Log Loss: {}".format(log_loss(y_valid, preds)))
 
 test_files = [im for im in os.listdir(TEST_DIR)]
@@ -112,7 +113,10 @@ test = np.ndarray((len(test_files), ROWS, COLS, CHANNELS), dtype=np.uint8)
 
 for i, im in enumerate(test_files): 
     test[i] = read_image(TEST_DIR+im)
-    
+
 test_preds = model.predict(test, verbose=1)
+
+
 submission = pd.DataFrame(test_preds, columns=FISH_CLASSES)
-submission.insert(0, 'image', test_filessubmission.head())
+submission.insert(0, 'image', test_files)
+submission.head()
